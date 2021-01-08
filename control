@@ -1,0 +1,5 @@
+Architecture: all
+Description: Parallel Service Controller
+Maintainer: kei-g <km.8k6ce+debpkg@gmail.com>
+Package: parallel-service-controller
+Version: 1.0.0

@@ -1,0 +1,99 @@
+#!/bin/sh
+
+readonly this=`basename $0`
+readonly esc=$(printf '\033')
+
+readonly ftl="$esc[31m"
+readonly nml="$esc[m"
+readonly suc="$esc[32m"
+readonly wrn="$esc[33m"
+
+readonly dollar='$'
+readonly info="$esc[36m"
+readonly quote='"'
+
+putsn() {
+	local level=$1
+	shift
+	if [ -z "$@" ]; then
+		printf '%s\n' "[$level$this$nml] `cat`"
+	else
+		printf '%s\n' "[$level$this$nml] $@"
+	fi
+}
+
+fatal() {
+	local progname=$1
+	local progerr=$2
+	local exitcode=$3
+	putsn $wrn "${ftl}$progname$nml is failed with error code $progerr." >&2
+	putsn $ftl "So $this is going to exit with error code $exitcode." >&2
+	exit $exitcode
+}
+
+warn() {
+	local progname=$1
+	local progerr=$2
+	shift
+	shift
+	putsn $wrn "${ftl}$progname$nml is failed with error code $progerr$@." >&2
+}
+
+args=`getopt -a -l command: -o c: -q -s sh -- "$@"`
+err=$?
+[ $err -eq 0 ] || fatal getopt $err 1
+
+eval set -- "$args"
+
+cmdlist=
+while [ "$1" != "--" ]; do
+	case "$1" in
+		-c | --command)
+			if [ -z "$cmdlist" ]; then
+				cmdlist="$2"
+			else
+				cmdlist="$cmdlist $2"
+			fi
+			shift
+		;;
+	esac
+	shift
+done
+shift
+
+[ -z "$cmdlist" ] && exit 1
+
+svclist=
+for svc in "$@"; do
+	if [ -z "$svclist" ]; then
+		svclist="$1"
+	else
+		svclist="$svclist $1"
+	fi
+done
+
+[ -z "$svclist" ] && exit 1
+
+for cmd in "$cmdlist"; do
+	pids=
+	for svc in "$svclist"; do
+		response=`service "$svc" "$cmd" 2>&1 &`
+		pid=$!
+		if [ ! -z "$response" ]; then
+			putsn $suc << _EOT_
+${info}service$nml said that
+$wrn$response$nml
+for $info$svc$nml against a specified command $info$cmd$nml
+_EOT_
+		fi
+		if [ -z "$pids" ]; then
+			pids="$pid"
+		else
+			pids="$pids $pid"
+		fi
+	done
+	[ -z "$pids" ] && continue
+	wait "$pids"
+done
+
+exit 0
