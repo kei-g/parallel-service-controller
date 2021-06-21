@@ -1,5 +1,9 @@
 Architecture: all
 Description: Parallel Service Controller
+Homepage: https://github.com/kei-g/parallel-service-controller
 Maintainer: kei-g <km.8k6ce+debpkg@gmail.com>
 Package: parallel-service-controller
+Priority: optional
+Section: admin
+Source: parallel-service-controller
 Version: 1.0.0
